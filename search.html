@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IntelOps — Search Operator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black: #060608;
+      --deep: #0b0c10;
+      --panel: #10131a;
+      --border: #1e2535;
+      --accent: #c8a84b;
+      --accent2: #e8c96a;
+      --red: #c0392b;
+      --green: #27ae60;
+      --text: #d4d8e2;
+      --muted: #5a6070;
+      --white: #f0f2f5;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      overflow-x: hidden;
+      cursor: crosshair;
+      min-height: 100vh;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.4;
+    }
+
+    /* ── SCANLINES ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px
+      );
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: rgba(6,6,8,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .nav-logo span { color: var(--white); }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-status {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--green);
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-dot {
+      width: 5px; height: 5px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── MAIN LAYOUT ── */
+    main {
+      padding-top: 70px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── SEARCH HERO ── */
+    .search-hero {
+      padding: 50px 24px 32px;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    /* Grid bg */
+    .search-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,168,75,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,168,75,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black, transparent);
+    }
+
+    .search-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      margin-bottom: 12px;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .search-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(36px, 10vw, 52px);
+      letter-spacing: 3px;
+      color: var(--white);
+      line-height: 1;
+      margin-bottom: 8px;
+      animation: fadeUp 0.5s ease 0.1s both;
+    }
+
+    .search-title .accent { color: var(--accent); }
+
+    .search-sub {
+      font-size: 13px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+      margin-bottom: 32px;
+      animation: fadeUp 0.5s ease 0.2s both;
+    }
+
+    /* ── SEARCH BOX ── */
+    .search-wrap {
+      position: relative;
+      max-width: 480px;
+      margin: 0 auto;
+      animation: fadeUp 0.5s ease 0.3s both;
+    }
+
+    .search-box {
+      display: flex;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    .search-box:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(200,168,75,0.15),
+                  0 0 24px rgba(200,168,75,0.06);
+    }
+
+    .search-icon {
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      color: var(--muted);
+      font-size: 16px;
+      border-right: 1px solid var(--border);
+      background: var(--deep);
+    }
+
+    .search-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--white);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 2px;
+      padding: 16px 14px;
+    }
+
+    .search-input::placeholder { color: var(--muted); }
+
+    .search-btn {
+      background: var(--accent);
+      border: none;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 15px;
+      letter-spacing: 2px;
+      padding: 0 20px;
+      cursor: crosshair;
+      transition: background 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .search-btn:hover { background: var(--accent2); }
+    .search-btn:active { transform: scale(0.98); }
+
+    /* Loading state */
+    .search-btn.loading {
+      background: var(--border);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    /* Error state */
+    .search-error {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--red);
+      margin-top: 10px;
+      text-align: left;
+      padding-left: 4px;
+      display: none;
+    }
+
+    .search-error.show { display: block; }
+
+    /* ── MODE TOGGLE ── */
+    .mode-toggle {
+      display: flex;
+      max-width: 480px;
+      margin: 12px auto 0;
+      gap: 2px;
+      animation: fadeUp 0.5s ease 0.4s both;
+    }
+
+    .mode-btn {
+      flex: 1;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      padding: 10px;
+      cursor: crosshair;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .mode-btn.active {
+      background: rgba(200,168,75,0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .mode-btn:hover:not(.active) {
+      border-color: rgba(200,168,75,0.3);
+      color: var(--text);
+    }
+
+    /* ── DIVIDER ── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 24px;
+      margin: 32px 0 20px;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .divider-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── RECENT SEARCHES ── */
+    .recent-section {
+      padding: 0 24px;
+      animation: fadeUp 0.5s ease 0.5s both;
+    }
+
+    .recent-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .recent-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .recent-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      cursor: crosshair;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .recent-item:hover {
+      border-color: rgba(200,168,75,0.3);
+      background: rgba(200,168,75,0.04);
+    }
+
+    .recent-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .recent-avatar {
+      width: 36px; height: 36px;
+      background: var(--deep);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      color: var(--accent);
+    }
+
+    .recent-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 17px;
+      letter-spacing: 2px;
+      color: var(--white);
+    }
+
+    .recent-meta {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    .recent-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .recent-kd {
+      text-align: right;
+    }
+
+    .recent-kd-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      color: var(--accent);
+    }
+
+    .recent-kd-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      color: var(--muted);
+      letter-spacing: 2px;
+    }
+
+    .recent-arrow {
+      color: var(--muted);
+      font-size: 12px;
+      transition: transform 0.2s ease, color 0.2s ease;
+    }
+
+    .recent-item:hover .recent-arrow {
+      transform: translateX(4px);
+      color: var(--accent);
+    }
+
+    /* ── COMPARE MODE INPUTS ── */
+    .compare-inputs {
+      padding: 0 24px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .compare-inputs.show { display: flex; }
+
+    .compare-field {
+      position: relative;
+    }
+
+    .compare-field-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      padding-left: 2px;
+    }
+
+    .compare-field-label.p2 { color: var(--accent); }
+
+    .compare-input-box {
+      display: flex;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+
+    .compare-input-box:focus-within { border-color: var(--accent); }
+    .compare-input-box.p2:focus-within { border-color: var(--accent); }
+
+    .compare-tag {
+      padding: 0 12px;
+      display: flex;
+      align-items: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 1px;
+      border-right: 1px solid var(--border);
+      background: var(--deep);
+      min-width: 44px;
+      justify-content: center;
+    }
+
+    .compare-tag.p1 { color: var(--green); }
+    .compare-tag.p2 { color: var(--accent); }
+
+    .compare-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--white);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 2px;
+      padding: 14px 12px;
+    }
+
+    .compare-input::placeholder { color: var(--muted); }
+
+    .vs-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .vs-line { flex: 1; height: 1px; background: var(--border); }
+
+    .vs-badge {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: var(--red);
+      border: 1px solid rgba(192,57,43,0.3);
+      padding: 2px 12px;
+    }
+
+    .compare-go-btn {
+      background: var(--accent);
+      border: none;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 17px;
+      letter-spacing: 3px;
+      padding: 16px;
+      cursor: crosshair;
+      transition: background 0.2s ease;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .compare-go-btn:hover { background: var(--accent2); }
+
+    /* ── STATS STRIP ── */
+    .stats-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      padding: 0 24px;
+      margin-top: 32px;
+      animation: fadeUp 0.5s ease 0.6s both;
+    }
+
+    .strip-box {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 16px 12px;
+      text-align: center;
+    }
+
+    .strip-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 24px;
+      color: var(--accent);
+      display: block;
+      letter-spacing: 1px;
+    }
+
+    .strip-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* ── TOP PLAYERS ── */
+    .top-section {
+      padding: 0 24px 40px;
+      margin-top: 32px;
+      animation: fadeUp 0.5s ease 0.7s both;
+    }
+
+    .top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .top-title {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 3px;
+      color: var(--muted);
+    }
+
+    .top-badge {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: var(--green);
+      border: 1px solid rgba(39,174,96,0.3);
+      padding: 3px 8px;
+    }
+
+    .top-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .top-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 12px 14px;
+      cursor: crosshair;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .top-item:hover {
+      border-color: rgba(200,168,75,0.3);
+    }
+
+    .top-rank {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      color: var(--border);
+      min-width: 28px;
+      line-height: 1;
+    }
+
+    .top-rank.gold { color: #c8a84b; }
+    .top-rank.silver { color: #8a9bb0; }
+    .top-rank.bronze { color: #8b5e3c; }
+
+    .top-avatar {
+      width: 32px; height: 32px;
+      background: var(--deep);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      color: var(--accent);
+    }
+
+    .top-info { flex: 1; }
+
+    .top-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 2px;
+      color: var(--white);
+    }
+
+    .top-stat {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      margin-top: 1px;
+    }
+
+    .top-kd {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      color: var(--accent);
+      letter-spacing: 1px;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Typing cursor effect on search */
+    .search-input:focus + .cursor { display: inline-block; }
+
+    /* Search loading animation */
+    @keyframes searchSpin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid var(--muted);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: searchSpin 0.6s linear infinite;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo">INTEL<span>OPS</span></a>
+    <div class="nav-right">
+      <div class="nav-status">
+        <div class="status-dot"></div>
+        ONLINE
+      </div>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- SEARCH HERO -->
+    <div class="search-hero">
+      <div class="search-label">// OPERATOR SEARCH //</div>
+      <h1 class="search-title">FIND YOUR <span class="accent">OPERATOR</span></h1>
+      <p class="search-sub">Enter a CODM username to pull their full intel</p>
+
+      <!-- SEARCH BOX -->
+      <div class="search-wrap">
+        <div class="search-box" id="searchBox">
+          <div class="search-icon">🔍</div>
+          <input
+            type="text"
+            class="search-input"
+            id="searchInput"
+            placeholder="ENTER USERNAME..."
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <button class="search-btn" id="searchBtn" onclick="handleSearch()">SEARCH</button>
+        </div>
+        <div class="search-error" id="searchError">
+          ⚠ USERNAME REQUIRED — ENTER OPERATOR CALLSIGN
+        </div>
+      </div>
+
+      <!-- MODE TOGGLE -->
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="soloBtn" onclick="setMode('solo')">
+          👤 SOLO SEARCH
+        </button>
+        <button class="mode-btn" id="compareBtn" onclick="setMode('compare')">
+          ⚔️ COMPARE MODE
+        </button>
+      </div>
+    </div>
+
+    <!-- COMPARE INPUTS (hidden by default) -->
+    <div class="compare-inputs" id="compareInputs">
+      <div class="compare-field">
+        <div class="compare-field-label">// PLAYER 1</div>
+        <div class="compare-input-box">
+          <div class="compare-tag p1">P1</div>
+          <input type="text" class="compare-input" id="p1Input" placeholder="ENTER USERNAME..." spellcheck="false"/>
+        </div>
+      </div>
+
+      <div class="vs-divider">
+        <div class="vs-line"></div>
+        <div class="vs-badge">VS</div>
+        <div class="vs-line"></div>
+      </div>
+
+      <div class="compare-field">
+        <div class="compare-field-label p2">// PLAYER 2</div>
+        <div class="compare-input-box p2">
+          <div class="compare-tag p2">P2</div>
+          <input type="text" class="compare-input" id="p2Input" placeholder="ENTER USERNAME..." spellcheck="false"/>
+        </div>
+      </div>
+
+      <button class="compare-go-btn" onclick="handleCompare()">
+        ⚔️ COMPARE OPERATORS
+      </button>
+    </div>
+
+    <!-- DIVIDER -->
+    <div class="section-divider">
+      <div class="divider-line"></div>
+      <div class="divider-label">// RECENT SEARCHES //</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <!-- RECENT SEARCHES -->
+    <div class="recent-section" id="recentSection">
+      <div class="recent-list" id="recentList">
+        <!-- Populated by JS -->
+      </div>
+      <div id="noRecent" style="display:none; text-align:center; padding: 24px 0;">
+        <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px;">
+          NO RECENT SEARCHES
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS STRIP -->
+    <div class="stats-strip">
+      <div class="strip-box">
+        <span class="strip-val" id="totalSearches">0</span>
+        <span class="strip-label">OPERATORS<br>SEARCHED</span>
+      </div>
+      <div class="strip-box">
+        <span class="strip-val" id="totalCompares">0</span>
+        <span class="strip-label">COMPARISONS<br>MADE</span>
+      </div>
+      <div class="strip-box">
+        <span class="strip-val">24/7</span>
+        <span class="strip-label">INTEL<br>AVAILABLE</span>
+      </div>
+    </div>
+
+    <!-- TOP PLAYERS (placeholder until real data) -->
+    <div class="section-divider" style="margin-top: 32px;">
+      <div class="divider-line"></div>
+      <div class="divider-label">// MOST SEARCHED TODAY //</div>
+      <div class="divider-line"></div>
+    </div>
+
+    <div class="top-section">
+      <div class="top-list" id="topList">
+
+        <a href="profile.html" class="top-item">
+          <div class="top-rank gold">01</div>
+          <div class="top-avatar">S</div>
+          <div class="top-info">
+            <div class="top-name">SHADOWKILL99</div>
+            <div class="top-stat">1,200 MATCHES // GRANDMASTER</div>
+          </div>
+          <div class="top-kd">1.85</div>
+        </a>
+
+        <a href="profile.html" class="top-item">
+          <div class="top-rank silver">02</div>
+          <div class="top-avatar">D</div>
+          <div class="top-info">
+            <div class="top-name">DARKREAPER22</div>
+            <div class="top-stat">980 MATCHES // LEGENDARY</div>
+          </div>
+          <div class="top-kd">2.10</div>
+        </a>
+
+        <a href="profile.html" class="top-item">
+          <div class="top-rank bronze">03</div>
+          <div class="top-avatar">G</div>
+          <div class="top-info">
+            <div class="top-name">GHOSTZERO</div>
+            <div class="top-stat">750 MATCHES // MASTER</div>
+          </div>
+          <div class="top-kd">1.67</div>
+        </a>
+
+        <a href="profile.html" class="top-item">
+          <div class="top-rank">04</div>
+          <div class="top-avatar">V</div>
+          <div class="top-info">
+            <div class="top-name">VOIDSTRIKER</div>
+            <div class="top-stat">620 MATCHES // MASTER</div>
+          </div>
+          <div class="top-kd">1.54</div>
+        </a>
+
+        <a href="profile.html" class="top-item">
+          <div class="top-rank">05</div>
+          <div class="top-avatar">N</div>
+          <div class="top-info">
+            <div class="top-name">NIGHTHAWK_X</div>
+            <div class="top-stat">510 MATCHES // ELITE</div>
+          </div>
+          <div class="top-kd">1.43</div>
+        </a>
+
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+
+    // ── MODE SWITCHING ──
+    let currentMode = 'solo';
+
+    function setMode(mode) {
+      currentMode = mode;
+      const soloBtn = document.getElementById('soloBtn');
+      const compareBtn = document.getElementById('compareBtn');
+      const searchBox = document.getElementById('searchBox').parentElement;
+      const compareInputs = document.getElementById('compareInputs');
+      const searchWrap = document.querySelector('.search-wrap');
+
+      if (mode === 'solo') {
+        soloBtn.classList.add('active');
+        compareBtn.classList.remove('active');
+        searchWrap.style.display = 'block';
+        compareInputs.classList.remove('show');
+      } else {
+        compareBtn.classList.add('active');
+        soloBtn.classList.remove('active');
+        searchWrap.style.display = 'none';
+        compareInputs.classList.add('show');
+      }
+    }
+
+    // ── SEARCH HANDLER ──
+    function handleSearch() {
+      const input = document.getElementById('searchInput');
+      const btn = document.getElementById('searchBtn');
+      const error = document.getElementById('searchError');
+      const username = input.value.trim();
+
+      if (!username) {
+        error.classList.add('show');
+        input.style.setProperty('--placeholder-color', 'var(--red)');
+        setTimeout(() => error.classList.remove('show'), 2500);
+        return;
+      }
+
+      // Loading state
+      btn.classList.add('loading');
+      btn.innerHTML = '<span class="spinner"></span>';
+
+      // Save to recent searches
+      saveRecent(username);
+      updateSearchCount();
+
+      // Simulate navigation to profile page
+      // In real app: window.location.href = `profile.html?user=${encodeURIComponent(username)}`
+      setTimeout(() => {
+        btn.classList.remove('loading');
+        btn.textContent = 'SEARCH';
+        // window.location.href = `profile.html?user=${encodeURIComponent(username)}`;
+        alert(`Navigating to profile: ${username}\n\n(Wire up to profile.html with your JS logic)`);
+        input.value = '';
+      }, 1500);
+    }
+
+    // ── COMPARE HANDLER ──
+    function handleCompare() {
+      const p1 = document.getElementById('p1Input').value.trim();
+      const p2 = document.getElementById('p2Input').value.trim();
+
+      if (!p1 || !p2) {
+        alert('Both usernames required for comparison');
+        return;
+      }
+
+      updateCompareCount();
+
+      // In real app: window.location.href = `compare.html?p1=${encodeURIComponent(p1)}&p2=${encodeURIComponent(p2)}`
+      alert(`Comparing:\n${p1} VS ${p2}\n\n(Wire up to compare.html with your JS logic)`);
+    }
+
+    // ── ENTER KEY SUPPORT ──
+    document.getElementById('searchInput').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleSearch();
+    });
+
+    document.getElementById('p2Input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleCompare();
+    });
+
+    // ── RECENT SEARCHES (localStorage) ──
+    function saveRecent(username) {
+      let recents = JSON.parse(localStorage.getItem('intelops_recent') || '[]');
+      // Remove if already exists
+      recents = recents.filter(r => r.username.toLowerCase() !== username.toLowerCase());
+      // Add to front
+      recents.unshift({
+        username: username.toUpperCase(),
+        timestamp: Date.now(),
+        kd: (Math.random() * 2 + 0.5).toFixed(2) // placeholder until real API
+      });
+      // Keep only last 5
+      recents = recents.slice(0, 5);
+      localStorage.setItem('intelops_recent', JSON.stringify(recents));
+      renderRecents();
+    }
+
+    function renderRecents() {
+      const list = document.getElementById('recentList');
+      const noRecent = document.getElementById('noRecent');
+      const recents = JSON.parse(localStorage.getItem('intelops_recent') || '[]');
+
+      if (recents.length === 0) {
+        list.style.display = 'none';
+        noRecent.style.display = 'block';
+        return;
+      }
+
+      noRecent.style.display = 'none';
+      list.style.display = 'flex';
+
+      list.innerHTML = recents.map(r => `
+        <a class="recent-item" href="profile.html?user=${encodeURIComponent(r.username)}" onclick="return false;">
+          <div class="recent-left">
+            <div class="recent-avatar">${r.username[0]}</div>
+            <div>
+              <div class="recent-name">${r.username}</div>
+              <div class="recent-meta">${timeAgo(r.timestamp)}</div>
+            </div>
+          </div>
+          <div class="recent-right">
+            <div class="recent-kd">
+              <div class="recent-kd-val">${r.kd}</div>
+              <div class="recent-kd-label">K/D</div>
+            </div>
+            <div class="recent-arrow">›</div>
+          </div>
+        </a>
+      `).join('');
+    }
+
+    function timeAgo(timestamp) {
+      const diff = Date.now() - timestamp;
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return 'JUST NOW';
+      if (mins < 60) return `${mins}M AGO`;
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return `${hrs}H AGO`;
+      return `${Math.floor(hrs / 24)}D AGO`;
+    }
+
+    // ── COUNTERS ──
+    function updateSearchCount() {
+      let count = parseInt(localStorage.getItem('intelops_searches') || '0') + 1;
+      localStorage.setItem('intelops_searches', count);
+      animateCount('totalSearches', count);
+    }
+
+    function updateCompareCount() {
+      let count = parseInt(localStorage.getItem('intelops_compares') || '0') + 1;
+      localStorage.setItem('intelops_compares', count);
+      animateCount('totalCompares', count);
+    }
+
+    function animateCount(id, target) {
+      const el = document.getElementById(id);
+      let current = 0;
+      const step = Math.ceil(target / 20);
+      const interval = setInterval(() => {
+        current = Math.min(current + step, target);
+        el.textContent = current;
+        if (current >= target) clearInterval(interval);
+      }, 40);
+    }
+
+    // ── INIT ──
+    function init() {
+      renderRecents();
+      const searches = localStorage.getItem('intelops_searches') || '0';
+      const compares = localStorage.getItem('intelops_compares') || '0';
+      document.getElementById('totalSearches').textContent = searches;
+      document.getElementById('totalCompares').textContent = compares;
+    }
+
+    init();
+
+  </script>
+  <!-- Add BEFORE your own script tag -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="firebase.js"></script>
+</body>
+</html>

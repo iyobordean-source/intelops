@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>IntelOps — Operator Profile</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black: #060608;
+      --deep: #0b0c10;
+      --panel: #10131a;
+      --border: #1e2535;
+      --accent: #c8a84b;
+      --accent2: #e8c96a;
+      --red: #c0392b;
+      --green: #27ae60;
+      --blue: #2980b9;
+      --text: #d4d8e2;
+      --muted: #5a6070;
+      --white: #f0f2f5;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: 'Barlow', sans-serif;
+      overflow-x: hidden;
+      cursor: crosshair;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.4;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 2px,
+        rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px
+      );
+      pointer-events: none;
+      z-index: 9998;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      background: rgba(6,6,8,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .nav-logo span { color: var(--white); }
+
+    .nav-back {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: color 0.2s ease;
+    }
+
+    .nav-back:hover { color: var(--accent); }
+
+    /* ── MAIN ── */
+    main { padding-top: 70px; }
+
+    /* ── LOADING STATE ── */
+    .loading-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 16px;
+    }
+
+    .loading-screen.hidden { display: none; }
+
+    .radar {
+      width: 60px; height: 60px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .radar::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(200,168,75,0.2);
+      border-radius: 50%;
+    }
+
+    .radar-sweep {
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 50%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent));
+      transform-origin: left center;
+      animation: sweep 1.2s linear infinite;
+    }
+
+    @keyframes sweep {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--muted);
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── PROFILE CONTENT ── */
+    .profile-content { display: none; }
+    .profile-content.show { display: block; }
+
+    /* ── OPERATOR HEADER ── */
+    .operator-header {
+      padding: 28px 24px 0;
+      position: relative;
+      animation: fadeUp 0.5s ease both;
+    }
+
+    .operator-header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,168,75,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,168,75,0.03) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: radial-gradient(ellipse 100% 100% at 50% 0%, black, transparent);
+    }
+
+    .op-tag {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 4px;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .op-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 20px;
+      position: relative;
+    }
+
+    /* accent bar on left */
+    .op-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent);
+    }
+
+    .op-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .op-identity { display: flex; align-items: center; gap: 14px; }
+
+    .op-avatar {
+      width: 54px; height: 54px;
+      background: var(--deep);
+      border: 1px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px;
+      color: var(--accent);
+      position: relative;
+    }
+
+    /* Online indicator */
+    .op-avatar::after {
+      content: '';
+      position: absolute;
+      bottom: -2px; right: -2px;
+      width: 10px; height: 10px;
+      background: var(--green);
+      border: 2px solid var(--black);
+      border-radius: 50%;
+    }
+
+    .op-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      letter-spacing: 3px;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .op-rank-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(200,168,75,0.1);
+      border: 1px solid rgba(200,168,75,0.3);
+      padding: 4px 10px;
+      margin-top: 6px;
+    }
+
+    .op-rank-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--accent);
+    }
+
+    .op-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+
+    .op-compare-btn {
+      background: var(--accent);
+      border: none;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px;
+      letter-spacing: 2px;
+      padding: 8px 14px;
+      cursor: crosshair;
+      transition: background 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .op-compare-btn:hover { background: var(--accent2); }
+
+    .op-share-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      padding: 6px 12px;
+      cursor: crosshair;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .op-share-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Updated timestamp */
+    .op-updated {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .live-dot {
+      width: 5px; height: 5px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    /* ── CORE STATS GRID ── */
+    .core-stats {
+      padding: 20px 24px 0;
+      animation: fadeUp 0.5s ease 0.1s both;
+    }
+
+    .section-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 4px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .stats-grid-2x2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2px;
+    }
+
+    .stat-tile {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 18px 14px;
+      position: relative;
+      overflow: hidden;
+      cursor: crosshair;
+      transition: border-color 0.2s ease;
+    }
+
+    .stat-tile:hover { border-color: rgba(200,168,75,0.3); }
+
+    .stat-tile::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.3s ease;
+    }
+
+    .stat-tile:hover::after { transform: scaleX(1); }
+
+    .stat-tile-icon {
+      font-size: 18px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .stat-tile-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 32px;
+      letter-spacing: 1px;
+      color: var(--accent);
+      display: block;
+      line-height: 1;
+    }
+
+    .stat-tile-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      display: block;
+      margin-top: 4px;
+    }
+
+    .stat-tile-delta {
+      position: absolute;
+      top: 12px; right: 12px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+    }
+
+    .stat-tile-delta.up { color: var(--green); }
+    .stat-tile-delta.down { color: var(--red); }
+
+    /* ── PERFORMANCE BARS ── */
+    .perf-section {
+      padding: 20px 24px 0;
+      animation: fadeUp 0.5s ease 0.2s both;
+    }
+
+    .perf-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 20px;
+    }
+
+    .perf-row {
+      margin-bottom: 16px;
+    }
+
+    .perf-row:last-child { margin-bottom: 0; }
+
+    .perf-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .perf-name {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text);
+    }
+
+    .perf-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 1px;
+      color: var(--accent);
+    }
+
+    .perf-bar {
+      height: 4px;
+      background: var(--deep);
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .perf-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      animation: barGrow 1.2s ease both;
+      position: relative;
+    }
+
+    .perf-fill::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: white;
+      opacity: 0.6;
+    }
+
+    @keyframes barGrow {
+      from { width: 0 !important; }
+    }
+
+    /* ── MATCH HISTORY ── */
+    .history-section {
+      padding: 20px 24px 0;
+      animation: fadeUp 0.5s ease 0.3s both;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-left: 3px solid transparent;
+      padding: 12px 14px;
+      transition: all 0.2s ease;
+    }
+
+    .history-item.win { border-left-color: var(--green); }
+    .history-item.loss { border-left-color: var(--red); }
+
+    .history-result {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 14px;
+      letter-spacing: 1px;
+      min-width: 36px;
+    }
+
+    .history-result.win { color: var(--green); }
+    .history-result.loss { color: var(--red); }
+
+    .history-mode {
+      flex: 1;
+    }
+
+    .history-mode-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 15px;
+      letter-spacing: 1px;
+      color: var(--white);
+    }
+
+    .history-mode-map {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .history-stats {
+      display: flex;
+      gap: 12px;
+      text-align: right;
+    }
+
+    .history-stat { text-align: center; }
+
+    .history-stat-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      color: var(--accent);
+      display: block;
+    }
+
+    .history-stat-lbl {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      display: block;
+    }
+
+    .history-time {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      text-align: right;
+      min-width: 32px;
+    }
+
+    /* ── WEAPON STATS ── */
+    .weapon-section {
+      padding: 20px 24px 0;
+      animation: fadeUp 0.5s ease 0.4s both;
+    }
+
+    .weapon-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .weapon-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 14px;
+      transition: border-color 0.2s ease;
+    }
+
+    .weapon-item:hover { border-color: rgba(200,168,75,0.2); }
+
+    .weapon-rank {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      min-width: 20px;
+    }
+
+    .weapon-icon {
+      font-size: 20px;
+      min-width: 28px;
+      text-align: center;
+    }
+
+    .weapon-info { flex: 1; }
+
+    .weapon-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 2px;
+      color: var(--white);
+    }
+
+    .weapon-type {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      margin-top: 1px;
+    }
+
+    .weapon-kills {
+      text-align: right;
+    }
+
+    .weapon-kill-val {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      color: var(--accent);
+      display: block;
+    }
+
+    .weapon-kill-lbl {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 7px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    /* ── COMPARE STICKY BTN ── */
+    .sticky-compare {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 16px 24px;
+      background: rgba(6,6,8,0.95);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      z-index: 50;
+      animation: slideUp 0.4s ease 0.8s both;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .sticky-inner {
+      display: flex;
+      gap: 8px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .sticky-btn-compare {
+      flex: 1;
+      background: var(--accent);
+      border: none;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 17px;
+      letter-spacing: 3px;
+      padding: 14px;
+      cursor: crosshair;
+      transition: background 0.2s ease;
+    }
+
+    .sticky-btn-compare:hover { background: var(--accent2); }
+
+    .sticky-btn-share {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      padding: 14px 16px;
+      cursor: crosshair;
+      transition: all 0.2s ease;
+    }
+
+    .sticky-btn-share:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── NOT FOUND STATE ── */
+    .not-found {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      padding: 40px 24px;
+      text-align: center;
+      gap: 16px;
+    }
+
+    .not-found.show { display: flex; }
+
+    .nf-icon { font-size: 48px; }
+
+    .nf-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 36px;
+      letter-spacing: 3px;
+      color: var(--white);
+    }
+
+    .nf-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .nf-btn {
+      background: var(--accent);
+      border: none;
+      color: var(--black);
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 16px;
+      letter-spacing: 3px;
+      padding: 14px 28px;
+      cursor: crosshair;
+      margin-top: 8px;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo">INTEL<span>OPS</span></a>
+    <a href="search.html" class="nav-back">← BACK TO SEARCH</a>
+  </nav>
+
+  <main>
+
+    <!-- LOADING -->
+    <div class="loading-screen" id="loadingScreen">
+      <div class="radar">
+        <div class="radar-sweep"></div>
+      </div>
+      <div class="loading-text">ACQUIRING TARGET...</div>
+    </div>
+
+    <!-- NOT FOUND -->
+    <div class="not-found" id="notFound">
+      <div class="nf-icon">🚫</div>
+      <div class="nf-title">OPERATOR NOT FOUND</div>
+      <div class="nf-sub">
+        USERNAME MAY HAVE CHANGED<br>
+        OR ACCOUNT DOES NOT EXIST
+      </div>
+      <a href="search.html" class="nf-btn">← SEARCH AGAIN</a>
+    </div>
+
+    <!-- PROFILE CONTENT -->
+    <div class="profile-content" id="profileContent">
+
+      <!-- OPERATOR HEADER -->
+      <div class="operator-header">
+        <div class="op-tag">// OPERATOR INTELLIGENCE FILE //</div>
+        <div class="op-card">
+          <div class="op-top">
+            <div class="op-identity">
+              <div class="op-avatar" id="opAvatar">S</div>
+              <div>
+                <div class="op-name" id="opName">SHADOWKILL99</div>
+                <div class="op-rank-badge">
+                  <span>🏅</span>
+                  <span class="op-rank-text" id="opRank">GRANDMASTER</span>
+                </div>
+              </div>
+            </div>
+            <div class="op-actions">
+              <button class="op-compare-btn" onclick="goToCompare()">⚔️ COMPARE</button>
+              <button class="op-share-btn" onclick="shareProfile()">📤 SHARE</button>
+            </div>
+          </div>
+          <div class="op-updated">
+            <div class="live-dot"></div>
+            <span id="opUpdated">INTEL REFRESHED JUST NOW</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- CORE STATS -->
+      <div class="core-stats">
+        <div class="section-label">// CORE PERFORMANCE METRICS</div>
+        <div class="stats-grid-2x2">
+          <div class="stat-tile">
+            <span class="stat-tile-icon">🎯</span>
+            <span class="stat-tile-val" id="statKD">1.85</span>
+            <span class="stat-tile-label">K/D RATIO</span>
+            <span class="stat-tile-delta up" id="deltaKD">▲ +0.12</span>
+          </div>
+          <div class="stat-tile">
+            <span class="stat-tile-icon">🏆</span>
+            <span class="stat-tile-val" id="statWR">35%</span>
+            <span class="stat-tile-label">WIN RATE</span>
+            <span class="stat-tile-delta up" id="deltaWR">▲ +3%</span>
+          </div>
+          <div class="stat-tile">
+            <span class="stat-tile-icon">💀</span>
+            <span class="stat-tile-val" id="statKills">15.4K</span>
+            <span class="stat-tile-label">TOTAL KILLS</span>
+            <span class="stat-tile-delta up" id="deltaKills">▲ +240</span>
+          </div>
+          <div class="stat-tile">
+            <span class="stat-tile-icon">🔫</span>
+            <span class="stat-tile-val" id="statHS">42%</span>
+            <span class="stat-tile-label">HEADSHOT RATE</span>
+            <span class="stat-tile-delta down" id="deltaHS">▼ -1%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERFORMANCE BARS -->
+      <div class="perf-section">
+        <div class="section-label">// DETAILED PERFORMANCE</div>
+        <div class="perf-card">
+
+          <div class="perf-row">
+            <div class="perf-meta">
+              <span class="perf-name">ACCURACY</span>
+              <span class="perf-val" id="perfAccuracy">61%</span>
+            </div>
+            <div class="perf-bar">
+              <div class="perf-fill" id="barAccuracy" style="width:61%"></div>
+            </div>
+          </div>
+
+          <div class="perf-row">
+            <div class="perf-meta">
+              <span class="perf-name">SURVIVAL RATE</span>
+              <span class="perf-val" id="perfSurvival">48%</span>
+            </div>
+            <div class="perf-bar">
+              <div class="perf-fill" id="barSurvival" style="width:48%"></div>
+            </div>
+          </div>
+
+          <div class="perf-row">
+            <div class="perf-meta">
+              <span class="perf-name">OBJECTIVE SCORE</span>
+              <span class="perf-val" id="perfObj">73%</span>
+            </div>
+            <div class="perf-bar">
+              <div class="perf-fill" id="barObj" style="width:73%"></div>
+            </div>
+          </div>
+
+          <div class="perf-row">
+            <div class="perf-meta">
+              <span class="perf-name">DAMAGE PER MATCH</span>
+              <span class="perf-val" id="perfDPM">2,840</span>
+            </div>
+            <div class="perf-bar">
+              <div class="perf-fill" id="barDPM" style="width:82%"></div>
+            </div>
+          </div>
+
+          <div class="perf-row">
+            <div class="perf-meta">
+              <span class="perf-name">MATCHES PLAYED</span>
+              <span class="perf-val" id="perfMatches">1,200</span>
+            </div>
+            <div class="perf-bar">
+              <div class="perf-fill" id="barMatches" style="width:55%"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RECENT MATCHES -->
+      <div class="history-section">
+        <div class="section-label">// RECENT MATCH HISTORY</div>
+        <div class="history-list" id="matchHistory">
+
+          <div class="history-item win">
+            <div class="history-result win">WIN</div>
+            <div class="history-mode">
+              <div class="history-mode-name">TEAM DEATHMATCH</div>
+              <div class="history-mode-map">RUST // 10V10</div>
+            </div>
+            <div class="history-stats">
+              <div class="history-stat">
+                <span class="history-stat-val">18</span>
+                <span class="history-stat-lbl">KILLS</span>
+              </div>
+              <div class="history-stat">
+                <span class="history-stat-val">6</span>
+                <span class="history-stat-lbl">DEATHS</span>
+              </div>
+            </div>
+            <div class="history-time">2H AGO</div>
+          </div>
+
+          <div class="history-item loss">
+            <div class="history-result loss">LOSS</div>
+            <div class="history-mode">
+              <div class="history-mode-name">HARDPOINT</div>
+              <div class="history-mode-map">CRASH // 5V5</div>
+            </div>
+            <div class="history-stats">
+              <div class="history-stat">
+                <span class="history-stat-val">11</span>
+                <span class="history-stat-lbl">KILLS</span>
+              </div>
+              <div class="history-stat">
+                <span class="history-stat-val">14</span>
+                <span class="history-stat-lbl">DEATHS</span>
+              </div>
+            </div>
+            <div class="history-time">4H AGO</div>
+          </div>
+
+          <div class="history-item win">
+            <div class="history-result win">WIN</div>
+            <div class="history-mode">
+              <div class="history-mode-name">BATTLE ROYALE</div>
+              <div class="history-mode-map">ISOLATED // SOLO</div>
+            </div>
+            <div class="history-stats">
+              <div class="history-stat">
+                <span class="history-stat-val">9</span>
+                <span class="history-stat-lbl">KILLS</span>
+              </div>
+              <div class="history-stat">
+                <span class="history-stat-val">0</span>
+                <span class="history-stat-lbl">DEATHS</span>
+              </div>
+            </div>
+            <div class="history-time">6H AGO</div>
+          </div>
+
+          <div class="history-item win">
+            <div class="history-result win">WIN</div>
+            <div class="history-mode">
+              <div class="history-mode-name">SEARCH & DESTROY</div>
+              <div class="history-mode-map">CROSSFIRE // 5V5</div>
+            </div>
+            <div class="history-stats">
+              <div class="history-stat">
+                <span class="history-stat-val">7</span>
+                <span class="history-stat-lbl">KILLS</span>
+              </div>
+              <div class="history-stat">
+                <span class="history-stat-val">4</span>
+                <span class="history-stat-lbl">DEATHS</span>
+              </div>
+            </div>
+            <div class="history-time">8H AGO</div>
+          </div>
+
+          <div class="history-item loss">
+            <div class="history-result loss">LOSS</div>
+            <div class="history-mode">
+              <div class="history-mode-name">DOMINATION</div>
+              <div class="history-mode-map">STANDOFF // 5V5</div>
+            </div>
+            <div class="history-stats">
+              <div class="history-stat">
+                <span class="history-stat-val">13</span>
+                <span class="history-stat-lbl">KILLS</span>
+              </div>
+              <div class="history-stat">
+                <span class="history-stat-val">15</span>
+                <span class="history-stat-lbl">DEATHS</span>
+              </div>
+            </div>
+            <div class="history-time">1D AGO</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- TOP WEAPONS -->
+      <div class="weapon-section">
+        <div class="section-label">// TOP WEAPONS</div>
+        <div class="weapon-list">
+
+          <div class="weapon-item">
+            <div class="weapon-rank">01</div>
+            <div class="weapon-icon">🔫</div>
+            <div class="weapon-info">
+              <div class="weapon-name">AK-47</div>
+              <div class="weapon-type">ASSAULT RIFLE</div>
+            </div>
+            <div class="weapon-kills">
+              <span class="weapon-kill-val">4,820</span>
+              <span class="weapon-kill-lbl">KILLS</span>
+            </div>
+          </div>
+
+          <div class="weapon-item">
+            <div class="weapon-rank">02</div>
+            <div class="weapon-icon">🎯</div>
+            <div class="weapon-info">
+              <div class="weapon-name">DL Q33</div>
+              <div class="weapon-type">SNIPER RIFLE</div>
+            </div>
+            <div class="weapon-kills">
+              <span class="weapon-kill-val">3,210</span>
+              <span class="weapon-kill-lbl">KILLS</span>
+            </div>
+          </div>
+
+          <div class="weapon-item">
+            <div class="weapon-rank">03</div>
+            <div class="weapon-icon">💥</div>
+            <div class="weapon-info">
+              <div class="weapon-name">FENNEC</div>
+              <div class="weapon-type">SMG</div>
+            </div>
+            <div class="weapon-kills">
+              <span class="weapon-kill-val">2,140</span>
+              <span class="weapon-kill-lbl">KILLS</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+    <!-- end profile content -->
+
+  </main>
+
+  <!-- STICKY COMPARE BAR -->
+  <div class="sticky-compare" id="stickyBar" style="display:none;">
+    <div class="sticky-inner">
+      <button class="sticky-btn-compare" onclick="goToCompare()">⚔️ COMPARE THIS OPERATOR</button>
+      <button class="sticky-btn-share" onclick="shareProfile()">📤</button>
+    </div>
+  </div>
+
+  <script>
+
+    // ── GET USERNAME FROM URL ──
+    // In real app: const params = new URLSearchParams(window.location.search);
+    // const username = params.get('user');
+    // For now using placeholder
+    const username = new URLSearchParams(window.location.search).get('user') || 'SHADOWKILL99';
+
+    // ── SIMULATE LOADING + DATA FETCH ──
+    // Replace this with your real Firebase/API call
+    function loadProfile() {
+      const loading = document.getElementById('loadingScreen');
+      const content = document.getElementById('profileContent');
+      const notFound = document.getElementById('notFound');
+      const stickyBar = document.getElementById('stickyBar');
+
+      // Simulate API delay
+      // In real app: call your Firebase/TrackerGG logic here
+      setTimeout(() => {
+        loading.classList.add('hidden');
+
+        // ── WIRE YOUR REAL DATA HERE ──
+        // If player found: show content
+        // If not found: show notFound
+
+        // Example of populating with real data:
+        // document.getElementById('opName').textContent = data.username;
+        // document.getElementById('opRank').textContent = data.rank;
+        // document.getElementById('statKD').textContent = data.kd;
+        // etc...
+
+        // For now show placeholder content
+        const found = true; // Replace with: playerData !== null
+
+        if (found) {
+          // Update name from URL param
+          document.getElementById('opName').textContent = username.toUpperCase();
+          document.getElementById('opAvatar').textContent = username[0].toUpperCase();
+          document.getElementById('opUpdated').textContent = 'INTEL REFRESHED JUST NOW';
+
+          content.classList.add('show');
+          stickyBar.style.display = 'block';
+        } else {
+          notFound.classList.add('show');
+        }
+
+      }, 1800);
+    }
+
+    // ── NAVIGATE TO COMPARE ──
+    function goToCompare() {
+      // In real app:
+      // window.location.href = `compare.html?p1=${encodeURIComponent(username)}`;
+      alert(`Going to compare page with: ${username}\n\n(Wire up to compare.html)`);
+    }
+
+    // ── SHARE PROFILE ──
+    function shareProfile() {
+      const url = window.location.href;
+      if (navigator.share) {
+        navigator.share({
+          title: `${username} — IntelOps`,
+          text: `Check out ${username}'s CODM stats on IntelOps 🎯`,
+          url: url
+        });
+      } else {
+        navigator.clipboard.writeText(url).then(() => {
+          const btn = document.querySelector('.op-share-btn');
+          btn.textContent = '✅ COPIED';
+          setTimeout(() => btn.textContent = '📤 SHARE', 2000);
+        });
+      }
+    }
+
+    // ── INIT ──
+    loadProfile();
+
+  </script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="firebase.js"></script>
+</body>
+</html>
