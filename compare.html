@@ -799,108 +799,173 @@
       <a href="search.html" class="new-compare-btn">⚔️ NEW COMPARISON</a>
     </div>
   </div>
-
-  <script>
-
-    // ── GET PARAMS FROM URL ──
-    // In real app:
-    // const params = new URLSearchParams(window.location.search);
-    // const p1 = params.get('p1');
-    // const p2 = params.get('p2');
-
-    const params = new URLSearchParams(window.location.search);
-    const p1Name = (params.get('p1') || 'SHADOWKILL99').toUpperCase();
-    const p2Name = (params.get('p2') || 'DARKREAPER22').toUpperCase();
-
-    // ── LOAD & POPULATE ──
-    // Replace with your real Firebase/API fetch logic
-    function loadComparison() {
-      const loading = document.getElementById('loadingScreen');
-      const content = document.getElementById('compareContent');
-      const stickyBar = document.getElementById('stickyBar');
-
-      setTimeout(() => {
-        loading.classList.add('hidden');
-
-        // ── WIRE YOUR REAL DATA HERE ──
-        // Fetch both players from Firebase/TrackerGG
-        // Then call populateData(p1Data, p2Data)
-
-        // Populate player names from URL params
-        document.getElementById('p1Name').textContent = p1Name;
-        document.getElementById('p2Name').textContent = p2Name;
-        document.getElementById('p1Avatar').textContent = p1Name[0];
-        document.getElementById('p2Avatar').textContent = p2Name[0];
-
-        // Update share section
-        document.getElementById('shareP1').textContent = p1Name;
-        document.getElementById('shareP2').textContent = p2Name;
-
-        // Calculate winner from data
-        // In real app: calculateWinner(p1Data, p2Data)
-        // For now using placeholder logic
-        updateWinnerBanner(p1Name, 4, 2);
-
-        content.classList.add('show');
-        stickyBar.style.display = 'block';
-
-      }, 2000);
-    }
-
-    // ── WINNER LOGIC ──
-    // Call this with real score data from your API
-    function updateWinnerBanner(winnerName, p1Score, p2Score) {
-      const isP1 = p1Score > p2Score;
-      const total = p1Score + p2Score;
-
-      document.getElementById('winnerName').textContent = winnerName;
-      document.getElementById('winnerName').style.color =
-        isP1 ? 'var(--p1)' : 'var(--p2)';
-
-      document.getElementById('winnerSub').textContent =
-        `DOMINANT IN ${Math.max(p1Score, p2Score)} OUT OF ${total} CATEGORIES`;
-
-      document.getElementById('p1Score').textContent = `P1 — ${p1Score}`;
-      document.getElementById('p2Score').textContent = `P2 — ${p2Score}`;
-
-      // Update share title
-      document.getElementById('shareTitle').textContent =
-        isP1 ? `${p1Name} DEFEATS ${p2Name}` : `${p2Name} DEFEATS ${p1Name}`;
-    }
-
-    // ── SHARE FUNCTIONS ──
-    function copyShareLink() {
-      const url = window.location.href;
-      navigator.clipboard.writeText(url).then(() => {
-        const btn = document.querySelector('.share-btn-copy');
-        const original = btn.textContent;
-        btn.textContent = '✅ LINK COPIED';
-        btn.style.background = 'var(--green)';
-        setTimeout(() => {
-          btn.textContent = original;
-          btn.style.background = '';
-        }, 2000);
-      });
-    }
-
-    function nativeShare() {
-      if (navigator.share) {
-        navigator.share({
-          title: `${p1Name} vs ${p2Name} — IntelOps`,
-          text: `⚔️ ${p1Name} vs ${p2Name} CODM comparison on IntelOps`,
-          url: window.location.href
-        });
-      } else {
-        copyShareLink();
-      }
-    }
-
-    // ── INIT ──
-    loadComparison();
-
-  </script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="firebase.js"></script>
+<script src="api.js"></script>
+<script>
+
+  const params = new URLSearchParams(window.location.search);
+  const p1Name = (params.get('p1') || 'SHADOWKILL99').toUpperCase();
+  const p2Name = (params.get('p2') || 'DARKREAPER22').toUpperCase();
+
+  // ── LOAD BOTH PLAYERS ──
+  async function loadComparison() {
+    const loading = document.getElementById('loadingScreen');
+    const content = document.getElementById('compareContent');
+    const stickyBar = document.getElementById('stickyBar');
+
+    // Try cache first for both players
+    let p1Data = await getPlayerByUsername(p1Name);
+    let p2Data = await getPlayerByUsername(p2Name);
+
+    // Fetch from API if not cached or stale
+    if (!p1Data || !isCacheFresh(p1Data.lastUpdated)) {
+      p1Data = await fetchPlayerStats(p1Name);
+      if (p1Data) {
+        await savePlayer(p1Data.username, p1Data);
+        await saveUsernameLookup(p1Name, p1Data.username);
+      }
+    }
+
+    if (!p2Data || !isCacheFresh(p2Data.lastUpdated)) {
+      p2Data = await fetchPlayerStats(p2Name);
+      if (p2Data) {
+        await savePlayer(p2Data.username, p2Data);
+        await saveUsernameLookup(p2Name, p2Data.username);
+      }
+    }
+
+    loading.classList.add('hidden');
+
+    // If either player not found show fallback names at least
+    if (!p1Data) p1Data = { username: p1Name, kd: 'N/A', winRate: 'N/A', kills: 'N/A', headshotRate: 'N/A', damage: 'N/A', matches: 'N/A', rank: 'UNKNOWN' };
+    if (!p2Data) p2Data = { username: p2Name, kd: 'N/A', winRate: 'N/A', kills: 'N/A', headshotRate: 'N/A', damage: 'N/A', matches: 'N/A', rank: 'UNKNOWN' };
+
+    populateData(p1Data, p2Data);
+    content.classList.add('show');
+    stickyBar.style.display = 'block';
+  }
+
+  // ── POPULATE ALL STATS ──
+  function populateData(p1, p2) {
+    // Player headers
+    document.getElementById('p1Name').textContent = p1.username;
+    document.getElementById('p2Name').textContent = p2.username;
+    document.getElementById('p1Avatar').textContent = p1.username[0];
+    document.getElementById('p2Avatar').textContent = p2.username[0];
+    document.getElementById('p1Rank').textContent = p1.rank;
+    document.getElementById('p2Rank').textContent = p2.rank;
+
+    // Share section
+    document.getElementById('shareP1').textContent = p1.username;
+    document.getElementById('shareP2').textContent = p2.username;
+
+    // Stats
+    const stats = [
+      { key: 'kd',           p1Val: p1.kd,           p2Val: p2.kd,           p1El: 'p1KD',      p2El: 'p2KD',      b1El: 'barP1KD',      b2El: 'barP2KD',      dotEl: 'dotKD',      rowEl: 'rowKD',      bEl: 'bKD'      },
+      { key: 'winRate',      p1Val: p1.winRate,       p2Val: p2.winRate,      p1El: 'p1WR',      p2El: 'p2WR',      b1El: 'barP1WR',      b2El: 'barP2WR',      dotEl: 'dotWR',      rowEl: 'rowWR',      bEl: 'bWR'      },
+      { key: 'kills',        p1Val: p1.kills,         p2Val: p2.kills,        p1El: 'p1Kills',   p2El: 'p2Kills',   b1El: 'barP1Kills',   b2El: 'barP2Kills',   dotEl: 'dotKills',   rowEl: 'rowKills',   bEl: 'bKills'   },
+      { key: 'headshotRate', p1Val: p1.headshotRate,  p2Val: p2.headshotRate, p1El: 'p1HS',      p2El: 'p2HS',      b1El: 'barP1HS',      b2El: 'barP2HS',      dotEl: 'dotHS',      rowEl: 'rowHS',      bEl: 'bHS'      },
+      { key: 'damage',       p1Val: p1.damage,        p2Val: p2.damage,       p1El: 'p1Acc',     p2El: 'p2Acc',     b1El: 'barP1Acc',     b2El: 'barP2Acc',     dotEl: 'dotAcc',     rowEl: 'rowAcc',     bEl: 'bAcc'     },
+      { key: 'matches',      p1Val: p1.matches,       p2Val: p2.matches,      p1El: 'p1Matches', p2El: 'p2Matches', b1El: 'barP1Matches', b2El: 'barP2Matches', dotEl: 'dotMatches', rowEl: 'rowMatches', bEl: 'bMatches' },
+    ];
+
+    let p1Score = 0;
+    let p2Score = 0;
+
+    stats.forEach(stat => {
+      const v1 = parseFloat(stat.p1Val) || 0;
+      const v2 = parseFloat(stat.p2Val) || 0;
+      const max = Math.max(v1, v2) || 1;
+      const p1Wins = v1 >= v2;
+
+      // Set values
+      document.getElementById(stat.p1El).textContent = stat.p1Val || 'N/A';
+      document.getElementById(stat.p2El).textContent = stat.p2Val || 'N/A';
+
+      // Set bar widths
+      document.getElementById(stat.b1El).style.width = `${(v1 / max) * 100}%`;
+      document.getElementById(stat.b2El).style.width = `${(v2 / max) * 100}%`;
+
+      // Winner styling
+      const p1El = document.getElementById(stat.p1El);
+      const p2El = document.getElementById(stat.p2El);
+      const dotEl = document.getElementById(stat.dotEl);
+      const rowEl = document.getElementById(stat.rowEl);
+      const bEl = document.getElementById(stat.bEl);
+
+      if (v1 > v2) {
+        p1El.className = 'compare-val winner-p1';
+        p2El.className = 'compare-val loser';
+        dotEl.className = 'compare-win-dot p1';
+        rowEl.className = 'compare-row win-left';
+        bEl.textContent = `${p1.username} WINS`;
+        bEl.className = 'breakdown-winner p1';
+        p1Score++;
+      } else if (v2 > v1) {
+        p2El.className = 'compare-val winner-p2';
+        p1El.className = 'compare-val loser';
+        dotEl.className = 'compare-win-dot p2';
+        rowEl.className = 'compare-row win-right';
+        bEl.textContent = `${p2.username} WINS`;
+        bEl.className = 'breakdown-winner p2';
+        p2Score++;
+      } else {
+        p1El.className = 'compare-val';
+        p2El.className = 'compare-val';
+        dotEl.className = 'compare-win-dot tie';
+        rowEl.className = 'compare-row';
+        bEl.textContent = 'TIE';
+        bEl.className = 'breakdown-winner tie';
+      }
+    });
+
+    // Winner banner
+    const winnerName = p1Score >= p2Score ? p1.username : p2.username;
+    updateWinnerBanner(winnerName, p1Score, p2Score);
+  }
+
+  // ── WINNER BANNER ──
+  function updateWinnerBanner(winnerName, p1Score, p2Score) {
+    const isP1 = p1Score >= p2Score;
+    const total = p1Score + p2Score;
+
+    document.getElementById('winnerName').textContent = winnerName;
+    document.getElementById('winnerName').style.color = isP1 ? 'var(--p1)' : 'var(--p2)';
+    document.getElementById('winnerSub').textContent = `DOMINANT IN ${Math.max(p1Score, p2Score)} OUT OF ${total} CATEGORIES`;
+    document.getElementById('p1Score').textContent = `P1 — ${p1Score}`;
+    document.getElementById('p2Score').textContent = `P2 — ${p2Score}`;
+    document.getElementById('shareTitle').textContent = isP1 ? `${p1Name} DEFEATS ${p2Name}` : `${p2Name} DEFEATS ${p1Name}`;
+  }
+
+  // ── SHARE ──
+  function copyShareLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      const btn = document.querySelector('.share-btn-copy');
+      const original = btn.textContent;
+      btn.textContent = '✅ LINK COPIED';
+      btn.style.background = 'var(--green)';
+      setTimeout(() => { btn.textContent = original; btn.style.background = ''; }, 2000);
+    });
+  }
+
+  function nativeShare() {
+    if (navigator.share) {
+      navigator.share({
+        title: `${p1Name} vs ${p2Name} — IntelOps`,
+        text: `⚔️ ${p1Name} vs ${p2Name} CODM comparison on IntelOps`,
+        url: window.location.href
+      });
+    } else {
+      copyShareLink();
+    }
+  }
+
+  loadComparison();
+
+</script>
+
+   
 </body>
 </html>

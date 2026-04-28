@@ -1,20 +1,18 @@
-// firebase.js
+// firebase.js — CDN compat version (no npm needed)
 
-// ── FIREBASE CONFIG ──
 const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "intelops-xxxx.firebaseapp.com",
-  projectId: "intelops-xxxx",
-  storageBucket: "intelops-xxxx.firebasestorage.app",
-  messagingSenderId: "xxxxxxxxxxxx",
-  appId: "your-app-id"
+  apiKey: "AIzaSyBPE9fFoyu4srRSTb3wRLNGNRXhz3D34ls",
+  authDomain: "intelops-d7aa8.firebaseapp.com",
+  projectId: "intelops-d7aa8",
+  storageBucket: "intelops-d7aa8.firebasestorage.app",
+  messagingSenderId: "553576810441",
+  appId: "1:553576810441:web:a2f1842bffc25211ed8a18"
 };
 
-// ── INITIALIZE ──
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// ── SAVE PLAYER TO FIREBASE ──
+// ── SAVE PLAYER ──
 async function savePlayer(playerID, data) {
   try {
     await db.collection("players").doc(playerID).set(data, { merge: true });
@@ -27,10 +25,8 @@ async function savePlayer(playerID, data) {
 // ── GET PLAYER BY ID ──
 async function getPlayerByID(playerID) {
   try {
-    const doc = await db.collection("players").doc(playerID).get();
-    if (doc.exists) {
-      return doc.data();
-    }
+    const snapshot = await db.collection("players").doc(playerID).get();
+    if (snapshot.exists) return snapshot.data();
     return null;
   } catch (error) {
     console.error("Error fetching player:", error);
@@ -38,24 +34,16 @@ async function getPlayerByID(playerID) {
   }
 }
 
-// ── GET PLAYER BY USERNAME (lookup table) ──
+// ── GET PLAYER BY USERNAME ──
 async function getPlayerByUsername(username) {
   try {
     const cleanName = username.toLowerCase().trim();
-
-    // Check lookup table first
-    const lookup = await db.collection("usernameLookup")
-      .doc(cleanName).get();
-
+    const lookup = await db.collection("usernameLookup").doc(cleanName).get();
     if (lookup.exists) {
       const playerID = lookup.data().playerID;
-      // Now get full player data using ID
       return await getPlayerByID(playerID);
     }
-
-    // Not found in lookup
     return null;
-
   } catch (error) {
     console.error("Error in username lookup:", error);
     return null;
@@ -67,7 +55,7 @@ async function saveUsernameLookup(username, playerID) {
   try {
     const cleanName = username.toLowerCase().trim();
     await db.collection("usernameLookup").doc(cleanName).set({
-      playerID: playerID,
+      playerID,
       addedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
   } catch (error) {
@@ -75,7 +63,7 @@ async function saveUsernameLookup(username, playerID) {
   }
 }
 
-// ── CHECK IF CACHE IS FRESH ──
+// ── CHECK CACHE FRESHNESS ──
 function isCacheFresh(lastUpdated) {
   if (!lastUpdated) return false;
   const oneHour = 60 * 60 * 1000;

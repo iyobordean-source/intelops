@@ -33,7 +33,6 @@
       min-height: 100vh;
     }
 
-    /* ── NOISE OVERLAY ── */
     body::before {
       content: '';
       position: fixed;
@@ -44,7 +43,6 @@
       opacity: 0.4;
     }
 
-    /* ── SCANLINES ── */
     body::after {
       content: '';
       position: fixed;
@@ -57,7 +55,6 @@
       z-index: 9998;
     }
 
-    /* ── NAV ── */
     nav {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -81,11 +78,7 @@
 
     .nav-logo span { color: var(--white); }
 
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
 
     .nav-status {
       font-family: 'Share Tech Mono', monospace;
@@ -109,7 +102,6 @@
       50% { opacity: 0.3; }
     }
 
-    /* ── MAIN LAYOUT ── */
     main {
       padding-top: 70px;
       min-height: 100vh;
@@ -117,7 +109,6 @@
       flex-direction: column;
     }
 
-    /* ── SEARCH HERO ── */
     .search-hero {
       padding: 50px 24px 32px;
       position: relative;
@@ -125,7 +116,6 @@
       text-align: center;
     }
 
-    /* Grid bg */
     .search-hero::before {
       content: '';
       position: absolute;
@@ -166,7 +156,6 @@
       animation: fadeUp 0.5s ease 0.2s both;
     }
 
-    /* ── SEARCH BOX ── */
     .search-wrap {
       position: relative;
       max-width: 480px;
@@ -184,8 +173,7 @@
 
     .search-box:focus-within {
       border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(200,168,75,0.15),
-                  0 0 24px rgba(200,168,75,0.06);
+      box-shadow: 0 0 0 1px rgba(200,168,75,0.15), 0 0 24px rgba(200,168,75,0.06);
     }
 
     .search-icon {
@@ -228,14 +216,12 @@
     .search-btn:hover { background: var(--accent2); }
     .search-btn:active { transform: scale(0.98); }
 
-    /* Loading state */
     .search-btn.loading {
       background: var(--border);
       color: var(--muted);
       pointer-events: none;
     }
 
-    /* Error state */
     .search-error {
       font-family: 'Share Tech Mono', monospace;
       font-size: 10px;
@@ -249,7 +235,6 @@
 
     .search-error.show { display: block; }
 
-    /* ── MODE TOGGLE ── */
     .mode-toggle {
       display: flex;
       max-width: 480px;
@@ -283,7 +268,6 @@
       color: var(--text);
     }
 
-    /* ── DIVIDER ── */
     .section-divider {
       display: flex;
       align-items: center;
@@ -292,11 +276,7 @@
       margin: 32px 0 20px;
     }
 
-    .divider-line {
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
+    .divider-line { flex: 1; height: 1px; background: var(--border); }
 
     .divider-label {
       font-family: 'Share Tech Mono', monospace;
@@ -306,25 +286,12 @@
       white-space: nowrap;
     }
 
-    /* ── RECENT SEARCHES ── */
     .recent-section {
       padding: 0 24px;
       animation: fadeUp 0.5s ease 0.5s both;
     }
 
-    .recent-title {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    .recent-list {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
+    .recent-list { display: flex; flex-direction: column; gap: 2px; }
 
     .recent-item {
       display: flex;
@@ -343,11 +310,7 @@
       background: rgba(200,168,75,0.04);
     }
 
-    .recent-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .recent-left { display: flex; align-items: center; gap: 12px; }
 
     .recent-avatar {
       width: 36px; height: 36px;
@@ -376,15 +339,9 @@
       margin-top: 2px;
     }
 
-    .recent-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .recent-right { display: flex; align-items: center; gap: 12px; }
 
-    .recent-kd {
-      text-align: right;
-    }
+    .recent-kd { text-align: right; }
 
     .recent-kd-val {
       font-family: 'Bebas Neue', sans-serif;
@@ -410,7 +367,6 @@
       color: var(--accent);
     }
 
-    /* ── COMPARE MODE INPUTS ── */
     .compare-inputs {
       padding: 0 24px;
       display: none;
@@ -420,10 +376,6 @@
     }
 
     .compare-inputs.show { display: flex; }
-
-    .compare-field {
-      position: relative;
-    }
 
     .compare-field-label {
       font-family: 'Share Tech Mono', monospace;
@@ -445,7 +397,6 @@
     }
 
     .compare-input-box:focus-within { border-color: var(--accent); }
-    .compare-input-box.p2:focus-within { border-color: var(--accent); }
 
     .compare-tag {
       padding: 0 12px;
@@ -477,12 +428,7 @@
 
     .compare-input::placeholder { color: var(--muted); }
 
-    .vs-divider {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
+    .vs-divider { display: flex; align-items: center; gap: 10px; }
     .vs-line { flex: 1; height: 1px; background: var(--border); }
 
     .vs-badge {
@@ -510,7 +456,6 @@
 
     .compare-go-btn:hover { background: var(--accent2); }
 
-    /* ── STATS STRIP ── */
     .stats-strip {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -544,41 +489,13 @@
       margin-top: 2px;
     }
 
-    /* ── TOP PLAYERS ── */
     .top-section {
       padding: 0 24px 40px;
       margin-top: 32px;
       animation: fadeUp 0.5s ease 0.7s both;
     }
 
-    .top-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-
-    .top-title {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 3px;
-      color: var(--muted);
-    }
-
-    .top-badge {
-      font-family: 'Share Tech Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 2px;
-      color: var(--green);
-      border: 1px solid rgba(39,174,96,0.3);
-      padding: 3px 8px;
-    }
-
-    .top-list {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
+    .top-list { display: flex; flex-direction: column; gap: 2px; }
 
     .top-item {
       display: flex;
@@ -592,9 +509,7 @@
       text-decoration: none;
     }
 
-    .top-item:hover {
-      border-color: rgba(200,168,75,0.3);
-    }
+    .top-item:hover { border-color: rgba(200,168,75,0.3); }
 
     .top-rank {
       font-family: 'Bebas Neue', sans-serif;
@@ -644,19 +559,12 @@
       letter-spacing: 1px;
     }
 
-    /* ── ANIMATIONS ── */
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(16px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Typing cursor effect on search */
-    .search-input:focus + .cursor { display: inline-block; }
-
-    /* Search loading animation */
-    @keyframes searchSpin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes searchSpin { to { transform: rotate(360deg); } }
 
     .spinner {
       display: inline-block;
@@ -666,12 +574,10 @@
       border-radius: 50%;
       animation: searchSpin 0.6s linear infinite;
     }
-
   </style>
 </head>
 <body>
 
-  <!-- NAV -->
   <nav>
     <a href="index.html" class="nav-logo">INTEL<span>OPS</span></a>
     <div class="nav-right">
@@ -684,13 +590,11 @@
 
   <main>
 
-    <!-- SEARCH HERO -->
     <div class="search-hero">
       <div class="search-label">// OPERATOR SEARCH //</div>
       <h1 class="search-title">FIND YOUR <span class="accent">OPERATOR</span></h1>
       <p class="search-sub">Enter a CODM username to pull their full intel</p>
 
-      <!-- SEARCH BOX -->
       <div class="search-wrap">
         <div class="search-box" id="searchBox">
           <div class="search-icon">🔍</div>
@@ -709,7 +613,6 @@
         </div>
       </div>
 
-      <!-- MODE TOGGLE -->
       <div class="mode-toggle">
         <button class="mode-btn active" id="soloBtn" onclick="setMode('solo')">
           👤 SOLO SEARCH
@@ -720,7 +623,6 @@
       </div>
     </div>
 
-    <!-- COMPARE INPUTS (hidden by default) -->
     <div class="compare-inputs" id="compareInputs">
       <div class="compare-field">
         <div class="compare-field-label">// PLAYER 1</div>
@@ -749,18 +651,14 @@
       </button>
     </div>
 
-    <!-- DIVIDER -->
     <div class="section-divider">
       <div class="divider-line"></div>
       <div class="divider-label">// RECENT SEARCHES //</div>
       <div class="divider-line"></div>
     </div>
 
-    <!-- RECENT SEARCHES -->
     <div class="recent-section" id="recentSection">
-      <div class="recent-list" id="recentList">
-        <!-- Populated by JS -->
-      </div>
+      <div class="recent-list" id="recentList"></div>
       <div id="noRecent" style="display:none; text-align:center; padding: 24px 0;">
         <div style="font-family:'Share Tech Mono',monospace; font-size:10px; color:var(--muted); letter-spacing:2px;">
           NO RECENT SEARCHES
@@ -768,7 +666,6 @@
       </div>
     </div>
 
-    <!-- STATS STRIP -->
     <div class="stats-strip">
       <div class="strip-box">
         <span class="strip-val" id="totalSearches">0</span>
@@ -784,7 +681,6 @@
       </div>
     </div>
 
-    <!-- TOP PLAYERS (placeholder until real data) -->
     <div class="section-divider" style="margin-top: 32px;">
       <div class="divider-line"></div>
       <div class="divider-label">// MOST SEARCHED TODAY //</div>
@@ -792,8 +688,7 @@
     </div>
 
     <div class="top-section">
-      <div class="top-list" id="topList">
-
+      <div class="top-list">
         <a href="profile.html" class="top-item">
           <div class="top-rank gold">01</div>
           <div class="top-avatar">S</div>
@@ -803,7 +698,6 @@
           </div>
           <div class="top-kd">1.85</div>
         </a>
-
         <a href="profile.html" class="top-item">
           <div class="top-rank silver">02</div>
           <div class="top-avatar">D</div>
@@ -813,7 +707,6 @@
           </div>
           <div class="top-kd">2.10</div>
         </a>
-
         <a href="profile.html" class="top-item">
           <div class="top-rank bronze">03</div>
           <div class="top-avatar">G</div>
@@ -823,7 +716,6 @@
           </div>
           <div class="top-kd">1.67</div>
         </a>
-
         <a href="profile.html" class="top-item">
           <div class="top-rank">04</div>
           <div class="top-avatar">V</div>
@@ -833,7 +725,6 @@
           </div>
           <div class="top-kd">1.54</div>
         </a>
-
         <a href="profile.html" class="top-item">
           <div class="top-rank">05</div>
           <div class="top-avatar">N</div>
@@ -843,12 +734,15 @@
           </div>
           <div class="top-kd">1.43</div>
         </a>
-
       </div>
     </div>
 
   </main>
 
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="firebase.js"></script>
+  <script src="api.js"></script>
   <script>
 
     // ── MODE SWITCHING ──
@@ -858,7 +752,6 @@
       currentMode = mode;
       const soloBtn = document.getElementById('soloBtn');
       const compareBtn = document.getElementById('compareBtn');
-      const searchBox = document.getElementById('searchBox').parentElement;
       const compareInputs = document.getElementById('compareInputs');
       const searchWrap = document.querySelector('.search-wrap');
 
@@ -876,40 +769,54 @@
     }
 
     // ── SEARCH HANDLER ──
-    function handleSearch() {
+    async function handleSearch() {
       const input = document.getElementById('searchInput');
       const btn = document.getElementById('searchBtn');
       const error = document.getElementById('searchError');
       const username = input.value.trim();
 
       if (!username) {
+        error.textContent = '⚠ USERNAME REQUIRED — ENTER OPERATOR CALLSIGN';
         error.classList.add('show');
-        input.style.setProperty('--placeholder-color', 'var(--red)');
         setTimeout(() => error.classList.remove('show'), 2500);
         return;
       }
 
-      // Loading state
       btn.classList.add('loading');
       btn.innerHTML = '<span class="spinner"></span>';
 
-      // Save to recent searches
-      saveRecent(username);
-      updateSearchCount();
+      const cached = await getPlayerByUsername(username);
 
-      // Simulate navigation to profile page
-      // In real app: window.location.href = `profile.html?user=${encodeURIComponent(username)}`
-      setTimeout(() => {
+      if (cached && isCacheFresh(cached.lastUpdated)) {
+        console.log("Loaded from cache");
+        saveRecent(username, cached.kd);
+        updateSearchCount();
         btn.classList.remove('loading');
         btn.textContent = 'SEARCH';
-        // window.location.href = `profile.html?user=${encodeURIComponent(username)}`;
-        alert(`Navigating to profile: ${username}\n\n(Wire up to profile.html with your JS logic)`);
-        input.value = '';
-      }, 1500);
+        window.location.href = `profile.html?user=${encodeURIComponent(username)}`;
+        return;
+      }
+
+      const data = await fetchPlayerStats(username);
+      btn.classList.remove('loading');
+      btn.textContent = 'SEARCH';
+
+      if (!data) {
+        error.textContent = '⚠ OPERATOR NOT FOUND — CHECK USERNAME';
+        error.classList.add('show');
+        setTimeout(() => error.classList.remove('show'), 3000);
+        return;
+      }
+
+      await savePlayer(data.username, data);
+      await saveUsernameLookup(username, data.username);
+      saveRecent(username, data.kd);
+      updateSearchCount();
+      window.location.href = `profile.html?user=${encodeURIComponent(username)}`;
     }
 
     // ── COMPARE HANDLER ──
-    function handleCompare() {
+    async function handleCompare() {
       const p1 = document.getElementById('p1Input').value.trim();
       const p2 = document.getElementById('p2Input').value.trim();
 
@@ -919,9 +826,7 @@
       }
 
       updateCompareCount();
-
-      // In real app: window.location.href = `compare.html?p1=${encodeURIComponent(p1)}&p2=${encodeURIComponent(p2)}`
-      alert(`Comparing:\n${p1} VS ${p2}\n\n(Wire up to compare.html with your JS logic)`);
+      window.location.href = `compare.html?p1=${encodeURIComponent(p1)}&p2=${encodeURIComponent(p2)}`;
     }
 
     // ── ENTER KEY SUPPORT ──
@@ -933,18 +838,15 @@
       if (e.key === 'Enter') handleCompare();
     });
 
-    // ── RECENT SEARCHES (localStorage) ──
-    function saveRecent(username) {
+    // ── RECENT SEARCHES ──
+    function saveRecent(username, kd = 'N/A') {
       let recents = JSON.parse(localStorage.getItem('intelops_recent') || '[]');
-      // Remove if already exists
       recents = recents.filter(r => r.username.toLowerCase() !== username.toLowerCase());
-      // Add to front
       recents.unshift({
         username: username.toUpperCase(),
         timestamp: Date.now(),
-        kd: (Math.random() * 2 + 0.5).toFixed(2) // placeholder until real API
+        kd: kd
       });
-      // Keep only last 5
       recents = recents.slice(0, 5);
       localStorage.setItem('intelops_recent', JSON.stringify(recents));
       renderRecents();
@@ -965,7 +867,7 @@
       list.style.display = 'flex';
 
       list.innerHTML = recents.map(r => `
-        <a class="recent-item" href="profile.html?user=${encodeURIComponent(r.username)}" onclick="return false;">
+        <a class="recent-item" href="profile.html?user=${encodeURIComponent(r.username)}">
           <div class="recent-left">
             <div class="recent-avatar">${r.username[0]}</div>
             <div>
@@ -1021,18 +923,12 @@
     // ── INIT ──
     function init() {
       renderRecents();
-      const searches = localStorage.getItem('intelops_searches') || '0';
-      const compares = localStorage.getItem('intelops_compares') || '0';
-      document.getElementById('totalSearches').textContent = searches;
-      document.getElementById('totalCompares').textContent = compares;
+      document.getElementById('totalSearches').textContent = localStorage.getItem('intelops_searches') || '0';
+      document.getElementById('totalCompares').textContent = localStorage.getItem('intelops_compares') || '0';
     }
 
     init();
 
   </script>
-  <!-- Add BEFORE your own script tag -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="firebase.js"></script>
 </body>
 </html>
